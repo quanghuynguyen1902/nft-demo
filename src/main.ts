@@ -24,9 +24,9 @@ const applicantWallet = Keypair.fromSecretKey(
     base58.decode("5A1v58EfgcwxX2BXkndTewGfzUgwaqk2LF3USs5T3DddgxzrnvgcwbaMyr5sUWjWTKM1fZjZYkuygNnpZunxG3pu")
 );
 
-const approverWallet = Keypair.fromSecretKey(
-    base58.decode("2WBM2v7kQLrpV2WnXYuEAeA8ZCk55KqSQgQiZD2EGRuuWg3SmAXTjfFD8SdYD22bFfyK4Xur4rdJ3P9nrM7jYWNL")
-);
+// const approverWallet = Keypair.fromSecretKey(
+//     base58.decode("2WBM2v7kQLrpV2WnXYuEAeA8ZCk55KqSQgQiZD2EGRuuWg3SmAXTjfFD8SdYD22bFfyK4Xur4rdJ3P9nrM7jYWNL")
+// );
 
 (async () => {
     let mint = Keypair.generate()
@@ -93,44 +93,44 @@ const approverWallet = Keypair.fromSecretKey(
                 },
             }
         ),
-        createApproveInstruction(
-            ata,
-            applicantWallet.publicKey,
-            applicantWallet.publicKey,
-            1,
-            [],
-            TOKEN_PROGRAM_ID)
+        // createApproveInstruction(
+        //     ata,
+        //     applicantWallet.publicKey,
+        //     applicantWallet.publicKey,
+        //     1,
+        //     [],
+        //     TOKEN_PROGRAM_ID)
     );
 
     console.log(await connection.sendTransaction(tx, [applicantWallet, mint]));
 
-    const [edition] = await PublicKey.findProgramAddress(
-        [
-            Buffer.from("metadata"),
-            PROGRAM_ID.toBuffer(),
-            mint.publicKey.toBuffer(),
-            Buffer.from("edition"),
-        ],
-        PROGRAM_ID
-    );
+    // const [edition] = await PublicKey.findProgramAddress(
+    //     [
+    //         Buffer.from("metadata"),
+    //         PROGRAM_ID.toBuffer(),
+    //         mint.publicKey.toBuffer(),
+    //         Buffer.from("edition"),
+    //     ],
+    //     PROGRAM_ID
+    // );
 
-    const freezeTx = createFreezeDelegatedAccountInstruction(
-        {
-            delegate: approverWallet.publicKey,
-            tokenAccount: ata,
-            edition,
-            mint: mint.publicKey,
-            tokenProgram: TOKEN_PROGRAM_ID,
-        },
-        PROGRAM_ID
-    )
-    let tx1 = new Transaction().add(freezeTx);
-
-
-    const txId = await sendAndConfirmTransaction(connection, tx1, [approverWallet], {
-        skipPreflight: true,
-        commitment: "confirmed",
-    });
+    // const freezeTx = createFreezeDelegatedAccountInstruction(
+    //     {
+    //         delegate: approverWallet.publicKey,
+    //         tokenAccount: ata,
+    //         edition,
+    //         mint: mint.publicKey,
+    //         tokenProgram: TOKEN_PROGRAM_ID,
+    //     },
+    //     PROGRAM_ID
+    // )
+    // let tx1 = new Transaction().add(freezeTx);
+    //
+    //
+    // const txId = await sendAndConfirmTransaction(connection, tx1, [approverWallet], {
+    //     skipPreflight: true,
+    //     commitment: "confirmed",
+    // });
 })();
 
 async function getMetadataPDA(mint: PublicKey): Promise<PublicKey> {
