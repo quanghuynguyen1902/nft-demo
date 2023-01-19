@@ -6,7 +6,7 @@ import {Connection} from "@solana/web3.js";
 import {wallet} from "./wallet";
 
 let nodeWallet = new NodeWallet(wallet)
-export const connection = new Connection("https://api.mainnet-beta.solana.com");
+export const connection = new Connection("https://api.devnet.solana.com");
 
 const provider = new AnchorProvider(connection, nodeWallet, {
     commitment: "processed",
