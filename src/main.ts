@@ -1,5 +1,6 @@
 import {Keypair, Connection, PublicKey, Transaction, SystemProgram, sendAndConfirmTransaction} from "@solana/web3.js";
 import base58 from "bs58";
+import { PROGRAM_FREEZE_NFT_ID } from './service/provider/programId'
 import {
     createApproveInstruction,
     createAssociatedTokenAccountInstruction,
@@ -15,20 +16,35 @@ import {
     createCreateMetadataAccountV2Instruction,
     createCreateMasterEditionV3Instruction, createFreezeDelegatedAccountInstruction, PROGRAM_ID,
 } from "@metaplex-foundation/mpl-token-metadata";
-
-let connection = new Connection("https://api.devnet.solana.com");
+import {connection} from "./service/provider/program";
+import {wallet} from "./service/provider/wallet";
+import {FreezeNft, getMasterEditionPDA, getMetadataPDA} from "./service/instructions/freeze_nft";
 
 // 5pVyoAeURQHNMVU7DmfMHvCDNmTEYXWfEwc136GYhTKG
 
-const applicantWallet = Keypair.fromSecretKey(
-    base58.decode("5A1v58EfgcwxX2BXkndTewGfzUgwaqk2LF3USs5T3DddgxzrnvgcwbaMyr5sUWjWTKM1fZjZYkuygNnpZunxG3pu")
-);
+const applicantWallet = wallet
 
-// const approverWallet = Keypair.fromSecretKey(
-//     base58.decode("2WBM2v7kQLrpV2WnXYuEAeA8ZCk55KqSQgQiZD2EGRuuWg3SmAXTjfFD8SdYD22bFfyK4Xur4rdJ3P9nrM7jYWNL")
-// );
+async function parseTransaction(connection: Connection, sig: string){
+    const parsed = await connection.getParsedTransaction(sig, "finalized");
+    if (!parsed || parsed?.meta?.err !== null) {
+        throw new Error("Invalid signature");
+    }
+    return parsed;
+};
 
-(async () => {
+async function test() {
+    const getParsedTx = await parseTransaction(connection, "3danKMRy4oyf4mD7Sun3FtnHxQGsHyxJwxBzHN1CWzaRdK6vjwEUH6gv5yNN2Cp6SPnUxwSHYbuimkNyX2zm24bZ");
+    let innerInstruction = getParsedTx?.meta?.innerInstructions;
+    if (innerInstruction != null) {
+        innerInstruction.map(tx => {
+            let ins = tx.instructions
+            ins.map(i => console.log(i))
+
+        })
+    }
+}
+
+async function mintNFT() {
     let mint = Keypair.generate()
     console.log(`mint: ${mint.publicKey.toBase58()}`);
 
@@ -37,6 +53,8 @@ const applicantWallet = Keypair.fromSecretKey(
     let tokenMetadataPubkey = await getMetadataPDA(mint.publicKey);
 
     let masterEditionPubkey = await getMasterEditionPDA(mint.publicKey);
+
+    let freezeNft = await FreezeNft(applicantWallet, mint.publicKey)
 
     let tx = new Transaction().add(
         SystemProgram.createAccount({
@@ -93,58 +111,18 @@ const applicantWallet = Keypair.fromSecretKey(
                 },
             }
         ),
-        // createApproveInstruction(
-        //     ata,
-        //     applicantWallet.publicKey,
-        //     applicantWallet.publicKey,
-        //     1,
-        //     [],
-        //     TOKEN_PROGRAM_ID)
+        freezeNft
     );
 
-    console.log(await connection.sendTransaction(tx, [applicantWallet, mint]));
-
-    // const [edition] = await PublicKey.findProgramAddress(
-    //     [
-    //         Buffer.from("metadata"),
-    //         PROGRAM_ID.toBuffer(),
-    //         mint.publicKey.toBuffer(),
-    //         Buffer.from("edition"),
-    //     ],
-    //     PROGRAM_ID
-    // );
-
-    // const freezeTx = createFreezeDelegatedAccountInstruction(
-    //     {
-    //         delegate: approverWallet.publicKey,
-    //         tokenAccount: ata,
-    //         edition,
-    //         mint: mint.publicKey,
-    //         tokenProgram: TOKEN_PROGRAM_ID,
-    //     },
-    //     PROGRAM_ID
-    // )
-    // let tx1 = new Transaction().add(freezeTx);
+    console.log(await connection.sendTransaction(tx, [applicantWallet, mint], {}));
     //
-    //
-    // const txId = await sendAndConfirmTransaction(connection, tx1, [approverWallet], {
-    //     skipPreflight: true,
-    //     commitment: "confirmed",
-    // });
+    // const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+    // await delay(1000*5);
+
+}
+
+
+(async () => {
+    test()
 })();
 
-async function getMetadataPDA(mint: PublicKey): Promise<PublicKey> {
-    const [publicKey] = await PublicKey.findProgramAddress(
-        [Buffer.from("metadata"), MPL_TOKEN_METADATA_PROGRAM_ID.toBuffer(), mint.toBuffer()],
-        MPL_TOKEN_METADATA_PROGRAM_ID
-    );
-    return publicKey;
-}
-
-async function getMasterEditionPDA(mint: PublicKey): Promise<PublicKey> {
-    const [publicKey] = await PublicKey.findProgramAddress(
-        [Buffer.from("metadata"), MPL_TOKEN_METADATA_PROGRAM_ID.toBuffer(), mint.toBuffer(), Buffer.from("edition")],
-        MPL_TOKEN_METADATA_PROGRAM_ID
-    );
-    return publicKey;
-}

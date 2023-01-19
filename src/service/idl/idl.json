@@ -1,0 +1,96 @@
+{
+  "version": "0.1.0",
+  "name": "freeze_nft_contract",
+  "instructions": [
+    {
+      "name": "freezeNft",
+      "accounts": [
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "nftMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "nftMetadata",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "ata",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "edition",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "metadataProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Authority",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "type": "publicKey"
+          }
+        ]
+      }
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "InvalidMint",
+      "msg": "InvalidMint"
+    },
+    {
+      "code": 6001,
+      "name": "InvalidOwner",
+      "msg": "InvalidOwner"
+    },
+    {
+      "code": 6002,
+      "name": "InvalidAmount",
+      "msg": "InvalidAmount"
+    }
+  ],
+  "metadata": {
+    "address": "7V56BshogTppQUSshpoFcwvyc8hfMtbCwoTWVKBoFokC"
+  }
+}
