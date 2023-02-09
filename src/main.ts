@@ -1,4 +1,12 @@
-import {Keypair, Connection, PublicKey, Transaction, SystemProgram, sendAndConfirmTransaction} from "@solana/web3.js";
+import {
+    Keypair,
+    Connection,
+    PublicKey,
+    Transaction,
+    SystemProgram,
+    sendAndConfirmTransaction,
+    LAMPORTS_PER_SOL
+} from "@solana/web3.js";
 import base58 from "bs58";
 import { PROGRAM_FREEZE_NFT_ID } from './service/provider/programId'
 import {
@@ -19,6 +27,7 @@ import {
 import {connection} from "./service/provider/program";
 import {wallet} from "./service/provider/wallet";
 import {FreezeNft, getMasterEditionPDA, getMetadataPDA} from "./service/instructions/freeze_nft";
+import {min} from "bn.js";
 
 // 5pVyoAeURQHNMVU7DmfMHvCDNmTEYXWfEwc136GYhTKG
 
@@ -47,8 +56,10 @@ async function test() {
 async function mintNFT() {
     let mint = Keypair.generate()
     console.log(`mint: ${mint.publicKey.toBase58()}`);
+    let mint1 = Keypair.generate()
+    console.log(`mint: ${mint.publicKey.toBase58()}`);
 
-    let ata = await getAssociatedTokenAddress(mint.publicKey, applicantWallet.publicKey);
+    let ata = await getAssociatedTokenAddress(mint.publicKey, mint1.publicKey);
 
     let tokenMetadataPubkey = await getMetadataPDA(mint.publicKey);
 
@@ -57,23 +68,28 @@ async function mintNFT() {
     let freezeNft = await FreezeNft(applicantWallet, mint.publicKey)
 
     let tx = new Transaction().add(
-        SystemProgram.createAccount({
+        SystemProgram.transfer({
             fromPubkey: applicantWallet.publicKey,
+            toPubkey: mint1.publicKey,
+            lamports: 0.02*LAMPORTS_PER_SOL,
+        }),
+        SystemProgram.createAccount({
+            fromPubkey: mint1.publicKey,
             newAccountPubkey: mint.publicKey,
             lamports: await getMinimumBalanceForRentExemptMint(connection),
             space: MINT_SIZE,
             programId: TOKEN_PROGRAM_ID,
         }),
-        createInitializeMintInstruction(mint.publicKey, 0, applicantWallet.publicKey, applicantWallet.publicKey),
-        createAssociatedTokenAccountInstruction(applicantWallet.publicKey, ata, applicantWallet.publicKey, mint.publicKey),
-        createMintToCheckedInstruction(mint.publicKey, ata, applicantWallet.publicKey, 1, 0),
+        createInitializeMintInstruction(mint.publicKey, 0, mint1.publicKey, mint1.publicKey),
+        createAssociatedTokenAccountInstruction(mint1.publicKey, ata, mint1.publicKey, mint.publicKey),
+        createMintToCheckedInstruction(mint.publicKey, ata, mint1.publicKey, 1, 0),
         createCreateMetadataAccountV2Instruction(
             {
                 metadata: tokenMetadataPubkey,
                 mint: mint.publicKey,
-                mintAuthority: applicantWallet.publicKey,
-                payer: applicantWallet.publicKey,
-                updateAuthority: applicantWallet.publicKey,
+                mintAuthority: mint1.publicKey,
+                payer: mint1.publicKey,
+                updateAuthority: mint1.publicKey,
             },
             {
                 createMetadataAccountArgsV2: {
@@ -84,7 +100,7 @@ async function mintNFT() {
                         sellerFeeBasisPoints: 100,
                         creators: [
                             {
-                                address: applicantWallet.publicKey,
+                                address: mint1.publicKey,
                                 verified: true,
                                 share: 100,
                             },
@@ -100,9 +116,9 @@ async function mintNFT() {
             {
                 edition: masterEditionPubkey,
                 mint: mint.publicKey,
-                updateAuthority: applicantWallet.publicKey,
-                mintAuthority: applicantWallet.publicKey,
-                payer: applicantWallet.publicKey,
+                updateAuthority: mint1.publicKey,
+                mintAuthority: mint1.publicKey,
+                payer: mint1.publicKey,
                 metadata: tokenMetadataPubkey,
             },
             {
@@ -110,11 +126,10 @@ async function mintNFT() {
                     maxSupply: 0,
                 },
             }
-        ),
-        freezeNft
+        )
     );
 
-    console.log(await connection.sendTransaction(tx, [applicantWallet, mint], {}));
+    console.log(await connection.sendTransaction(tx, [applicantWallet, mint, mint1], {}));
     //
     // const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
     // await delay(1000*5);
@@ -123,6 +138,6 @@ async function mintNFT() {
 
 
 (async () => {
-    test()
+    mintNFT()
 })();
 
