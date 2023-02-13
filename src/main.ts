@@ -65,42 +65,37 @@ async function mintNFT() {
 
     let masterEditionPubkey = await getMasterEditionPDA(mint.publicKey);
 
-    let freezeNft = await FreezeNft(applicantWallet, mint.publicKey)
+    // let freezeNft = await FreezeNft(applicantWallet, mint.publicKey)
 
     let tx = new Transaction().add(
-        SystemProgram.transfer({
-            fromPubkey: applicantWallet.publicKey,
-            toPubkey: mint1.publicKey,
-            lamports: 0.02*LAMPORTS_PER_SOL,
-        }),
         SystemProgram.createAccount({
-            fromPubkey: mint1.publicKey,
+            fromPubkey: applicantWallet.publicKey,
             newAccountPubkey: mint.publicKey,
             lamports: await getMinimumBalanceForRentExemptMint(connection),
             space: MINT_SIZE,
             programId: TOKEN_PROGRAM_ID,
         }),
-        createInitializeMintInstruction(mint.publicKey, 0, mint1.publicKey, mint1.publicKey),
-        createAssociatedTokenAccountInstruction(mint1.publicKey, ata, mint1.publicKey, mint.publicKey),
-        createMintToCheckedInstruction(mint.publicKey, ata, mint1.publicKey, 1, 0),
+        createInitializeMintInstruction(mint.publicKey, 0, applicantWallet.publicKey, applicantWallet.publicKey),
+        createAssociatedTokenAccountInstruction(applicantWallet.publicKey, ata, mint1.publicKey, mint.publicKey),
+        createMintToCheckedInstruction(mint.publicKey, ata, applicantWallet.publicKey, 1, 0),
         createCreateMetadataAccountV2Instruction(
             {
                 metadata: tokenMetadataPubkey,
                 mint: mint.publicKey,
-                mintAuthority: mint1.publicKey,
-                payer: mint1.publicKey,
-                updateAuthority: mint1.publicKey,
+                mintAuthority: applicantWallet.publicKey,
+                payer: applicantWallet.publicKey,
+                updateAuthority: applicantWallet.publicKey,
             },
             {
                 createMetadataAccountArgsV2: {
                     data: {
-                        name: "Fake SMS #1355",
+                        name: "Test 123",
                         symbol: "FSMB",
                         uri: "https://34c7ef24f4v2aejh75xhxy5z6ars4xv47gpsdrei6fiowptk2nqq.arweave.net/3wXyF1wvK6ARJ_9ue-O58CMuXrz5nyHEiPFQ6z5q02E",
                         sellerFeeBasisPoints: 100,
                         creators: [
                             {
-                                address: mint1.publicKey,
+                                address: applicantWallet.publicKey,
                                 verified: true,
                                 share: 100,
                             },
@@ -116,9 +111,9 @@ async function mintNFT() {
             {
                 edition: masterEditionPubkey,
                 mint: mint.publicKey,
-                updateAuthority: mint1.publicKey,
-                mintAuthority: mint1.publicKey,
-                payer: mint1.publicKey,
+                updateAuthority: applicantWallet.publicKey,
+                mintAuthority: applicantWallet.publicKey,
+                payer: applicantWallet.publicKey,
                 metadata: tokenMetadataPubkey,
             },
             {
